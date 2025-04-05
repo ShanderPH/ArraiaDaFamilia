@@ -1,20 +1,60 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Pause } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX } from "lucide-react";
 
-// Extend the Window interface to include onYouTubeIframeAPIReady
+// Define more specific types for YouTube API
 declare global {
     interface Window {
         onYouTubeIframeAPIReady?: () => void;
+        YT?: {
+            Player: new (
+                elementId: string,
+                config: YouTubePlayerConfig
+            ) => YouTubePlayer;
+            PlayerState?: {
+                PLAYING: number;
+                PAUSED: number;
+                ENDED: number;
+            };
+        };
     }
+}
+
+// YouTube Player specific types
+interface YouTubePlayerConfig {
+    videoId: string;
+    playerVars?: {
+        autoplay?: 0 | 1;
+        controls?: 0 | 1;
+        mute?: 0 | 1;
+        playsinline?: 0 | 1;
+    };
+    events?: {
+        onReady?: (event: YouTubeEvent) => void;
+        onStateChange?: (event: YouTubeEvent) => void;
+        onError?: (event: YouTubeEvent) => void;
+    };
+}
+
+interface YouTubeEvent {
+    target: YouTubePlayer;
+    data: number;
+}
+
+interface YouTubePlayer {
+    playVideo: () => void;
+    pauseVideo: () => void;
+    mute: () => void;
+    unMute: () => void;
+    destroy: () => void;
+    getPlayerState: () => number;
 }
 
 type MediaType = "spotify" | "youtube";
 
 interface AutoPocketPlayerProps {
-    // Pre-configured media settings
     mediaType: MediaType;
     mediaId: string;
     autoPlay?: boolean;
@@ -25,17 +65,92 @@ export function AutoPocketPlayer({
     mediaId,
     autoPlay = true,
 }: AutoPocketPlayerProps) {
-    const [isPlaying, setIsPlaying] = useState(autoPlay);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [isMuted, setIsMuted] = useState(true); // Start muted to enable autoplay
+    const [playerReady, setPlayerReady] = useState(false);
+    const [hasInteracted, setHasInteracted] = useState(false);
 
-    // Use useRef instead of useState for the player reference
-    const ytPlayerRef = useRef<YT.Player | null>(null);
+    // Use useRef for the player reference
+    const ytPlayerRef = useRef<YouTubePlayer | null>(null);
+    const playerContainerId = "yt-player-container";
+
+    // Track user interaction with the document
+    useEffect(() => {
+        const handleUserInteraction = () => {
+            setHasInteracted(true);
+
+            // Try to unmute and play after user interaction if player is ready
+            if (playerReady && ytPlayerRef.current && isPlaying && isMuted) {
+                ytPlayerRef.current.unMute();
+                setIsMuted(false);
+            }
+
+            // Remove listeners after first interaction
+            document.removeEventListener("click", handleUserInteraction);
+            document.removeEventListener("touchstart", handleUserInteraction);
+        };
+
+        document.addEventListener("click", handleUserInteraction);
+        document.addEventListener("touchstart", handleUserInteraction);
+
+        return () => {
+            document.removeEventListener("click", handleUserInteraction);
+            document.removeEventListener("touchstart", handleUserInteraction);
+        };
+    }, [playerReady, isPlaying, isMuted]);
+
+    // Define initYouTubePlayer with useCallback to avoid dependency issues
+    const initYouTubePlayer = useCallback(() => {
+        if (!window.YT?.Player) return;
+
+        ytPlayerRef.current = new window.YT.Player(playerContainerId, {
+            videoId: mediaId,
+            playerVars: {
+                autoplay: autoPlay ? 1 : 0,
+                controls: 0,
+                mute: 1, // Start muted to comply with mobile autoplay policies
+                playsinline: 1, // Required for iOS
+            },
+            events: {
+                onReady: (event: YouTubeEvent) => {
+                    setPlayerReady(true);
+
+                    // Initial state - must be done here for mobile
+                    if (autoPlay) {
+                        event.target.playVideo();
+                        setIsPlaying(true);
+                    }
+                },
+                onStateChange: (event: YouTubeEvent) => {
+                    if (window.YT?.PlayerState) {
+                        setIsPlaying(
+                            event.data === window.YT.PlayerState.PLAYING
+                        );
+                    }
+                },
+                onError: (event: YouTubeEvent) => {
+                    console.error("YouTube player error:", event.data);
+                },
+            },
+        });
+    }, [mediaId, autoPlay]); // Include dependencies
 
     // Initialize YouTube player
     useEffect(() => {
-        // Only initialize YouTube API if we're using YouTube
         if (mediaType !== "youtube") return;
 
-        // Load YouTube iframe API if not already loaded
+        // Create container for the player
+        if (!document.getElementById(playerContainerId)) {
+            const container = document.createElement("div");
+            container.id = playerContainerId;
+            container.style.position = "absolute";
+            container.style.visibility = "hidden";
+            container.style.width = "1px";
+            container.style.height = "1px";
+            document.body.appendChild(container);
+        }
+
+        // Load YouTube API
         if (!window.YT) {
             const tag = document.createElement("script");
             tag.src = "https://www.youtube.com/iframe_api";
@@ -44,51 +159,47 @@ export function AutoPocketPlayer({
                 firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
             }
 
-            // Define onYouTubeIframeAPIReady globally
             window.onYouTubeIframeAPIReady = initYouTubePlayer;
         } else {
-            // If already loaded, just initialize player
             initYouTubePlayer();
         }
 
-        // Cleanup
         return () => {
             if (ytPlayerRef.current) {
                 ytPlayerRef.current.destroy();
             }
         };
-    }, [mediaType, mediaId]);
+    }, [mediaType, mediaId, initYouTubePlayer]); // Include initYouTubePlayer in dependencies
 
-    // Function to initialize YouTube player
-    const initYouTubePlayer = () => {
-        if (!window.YT?.Player) return;
-
-        // Create a hidden container for the player if it doesn't exist
-        if (!document.getElementById("yt-player-container")) {
-            const container = document.createElement("div");
-            container.id = "yt-player-container";
-            container.style.position = "absolute";
-            container.style.visibility = "hidden";
-            container.style.width = "1px";
-            container.style.height = "1px";
-            document.body.appendChild(container);
-        }
-
-        // Create the player
-    };
-
-    // Toggle play/pause state
+    // Toggle play/pause
     const togglePlayPause = () => {
-        if (mediaType === "youtube" && ytPlayerRef.current) {
+        if (mediaType === "youtube" && ytPlayerRef.current && playerReady) {
             if (isPlaying) {
                 ytPlayerRef.current.pauseVideo();
             } else {
                 ytPlayerRef.current.playVideo();
+
+                // If user has interacted, we can unmute
+                if (hasInteracted && isMuted) {
+                    ytPlayerRef.current.unMute();
+                    setIsMuted(false);
+                }
             }
-            // The state will be updated via the onStateChange event
         } else {
-            // For Spotify or if YouTube player isn't ready
             setIsPlaying(!isPlaying);
+        }
+    };
+
+    // Toggle mute state
+    const toggleMute = () => {
+        if (mediaType === "youtube" && ytPlayerRef.current && playerReady) {
+            if (isMuted) {
+                ytPlayerRef.current.unMute();
+                setIsMuted(false);
+            } else {
+                ytPlayerRef.current.mute();
+                setIsMuted(true);
+            }
         }
     };
 
@@ -108,26 +219,26 @@ export function AutoPocketPlayer({
                     )}
                 </Button>
 
+                {mediaType === "youtube" && playerReady && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 rounded-full"
+                        onClick={toggleMute}
+                    >
+                        {isMuted ? (
+                            <VolumeX className="h-3 w-3" />
+                        ) : (
+                            <Volume2 className="h-3 w-3" />
+                        )}
+                    </Button>
+                )}
+
                 <span className="text-xs font-medium">
                     {mediaType === "spotify" ? "Spotify" : "YouTube"}{" "}
                     {isPlaying ? "Playing" : "Paused"}
                 </span>
             </div>
-
-            {/* Hidden iframe for YouTube autoplay on page load */}
-            {mediaType === "youtube" && autoPlay && (
-                <iframe
-                    src={`https://www.youtube.com/embed/${mediaId}?autoplay=1&mute=0`}
-                    width="1"
-                    height="1"
-                    style={{
-                        position: "absolute",
-                        opacity: 0,
-                        pointerEvents: "none",
-                    }}
-                    allow="autoplay"
-                ></iframe>
-            )}
         </div>
     );
 }
