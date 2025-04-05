@@ -100,6 +100,7 @@ export default function MenuCard({ item }) {
         }
     };
 
+
     return (
         <div className="group relative overflow-hidden rounded-xl bg-background transition-all hover:shadow-lg">
             <div className="relative aspect-square overflow-hidden bg-muted">
@@ -115,6 +116,7 @@ export default function MenuCard({ item }) {
                     </Badge>
                 )}
 
+
                 {/* Display user name in the center of the image if selected */}
                 {selectedBy && (
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -126,6 +128,7 @@ export default function MenuCard({ item }) {
                         </div>
                     </div>
                 )}
+
             </div>
             <div className="p-4">
                 <h3 className="text-lg font-semibold">{name}</h3>
@@ -178,6 +181,7 @@ export default function MenuCard({ item }) {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
         </div>
     );
 }

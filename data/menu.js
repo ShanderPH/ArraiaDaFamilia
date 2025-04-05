@@ -9,9 +9,11 @@ export const menuProducts = {
         {
             id: 1,
             name: "Caldo de Costela",
+
             description:
                 "Costela cozida com temperos especiais e mandioca cozida",
             image: "/icons/caldo-de-costela.svg",
+
         },
         {
             id: 2,
@@ -19,6 +21,7 @@ export const menuProducts = {
             description:
                 "Sopa tradicional feita com couve, mandioca, linguiça e temperos",
             image: "/icons/caldo-verde.svg",
+
         },
         {
             id: 3,
@@ -26,6 +29,7 @@ export const menuProducts = {
             description:
                 "Sopa tradicional feita com frango, mandioca, cheiro-verde e temperos",
             image: "/icons/caldo-de-pinto.svg",
+
         },
         {
             id: 4,
@@ -33,6 +37,7 @@ export const menuProducts = {
             description:
                 "Torta com uma massa leve e aerada que envolve um recheio suculento de frango desfiado",
             image: "/icons/empadao.svg",
+
         },
         {
             id: 5,
@@ -40,12 +45,14 @@ export const menuProducts = {
             description:
                 "Lanche com pão e um molho de salsicha e temperos especiais",
             image: "/icons/cachorro-quente.svg",
+
         },
         {
             id: 6,
             name: "Salgados",
             description: "Salgados fritos variados",
             image: "/icons/salgados.svg",
+
         },
         {
             id: 7,
@@ -53,6 +60,7 @@ export const menuProducts = {
             description:
                 "Prato típico brasileiro feito com feijão cozido, temperado e acompanhado de cebola, alho, bacon, salsa e louro.",
             image: "/icons/caldo-de-feijao.svg",
+
         },
         {
             id: 8,
@@ -60,6 +68,7 @@ export const menuProducts = {
             description:
                 "prato típico feito de canjiquinha, costelinha de porco e temperos. ",
             image: "/icons/pela-egua.svg",
+
         },
     ],
     sobremesas: [

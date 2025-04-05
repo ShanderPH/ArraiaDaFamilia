@@ -95,6 +95,7 @@ export default function MenuTabs() {
             >
                 <TabsList className="mb-6 w-full justify-start overflow-auto">
                     {menuCategories.map((category) => (
+
                         <TabsTrigger
                             key={category.value}
                             value={category.value}
@@ -104,6 +105,7 @@ export default function MenuTabs() {
                         </TabsTrigger>
                     ))}
                 </TabsList>
+
 
                 {menuCategories.map((category) => (
                     <TabsContent
