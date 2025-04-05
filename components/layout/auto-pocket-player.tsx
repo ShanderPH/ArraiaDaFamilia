@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Music, Youtube, Play, Pause } from "lucide-react";
+import { Play, Pause } from "lucide-react";
 
 // Extend the Window interface to include onYouTubeIframeAPIReady
 declare global {
@@ -26,11 +26,9 @@ export function AutoPocketPlayer({
     autoPlay = true,
 }: AutoPocketPlayerProps) {
     const [isPlaying, setIsPlaying] = useState(autoPlay);
-    const [isOpen, setIsOpen] = useState(false);
-    const playerRef = useRef(null);
 
-    // YouTube iframe API reference
-    const [ytPlayer, setYtPlayer] = useState<YT.Player | null>(null);
+    // Use useRef instead of useState for the player reference
+    const ytPlayerRef = useRef<YT.Player | null>(null);
 
     // Initialize YouTube player
     useEffect(() => {
@@ -55,8 +53,8 @@ export function AutoPocketPlayer({
 
         // Cleanup
         return () => {
-            if (ytPlayer) {
-                ytPlayer.destroy();
+            if (ytPlayerRef.current) {
+                ytPlayerRef.current.destroy();
             }
         };
     }, [mediaType, mediaId]);
@@ -77,45 +75,15 @@ export function AutoPocketPlayer({
         }
 
         // Create the player
-        const player = new window.YT.Player("yt-player-container", {
-            videoId: mediaId,
-            playerVars: {
-                autoplay: autoPlay ? 1 : 0,
-                controls: 0,
-                disablekb: 1,
-                fs: 0,
-                modestbranding: 1,
-                playsinline: 1,
-            },
-            events: {
-                onReady: (event) => {
-                    if (autoPlay) event.target.playVideo();
-                    setYtPlayer(event.target);
-                },
-                onStateChange: (event) => {
-                    // Update playing state based on video state
-                    setIsPlaying(event.data === window.YT.PlayerState.PLAYING);
-                },
-            },
-        });
-    };
-
-    // Format the embed URL for Spotify
-    const getSpotifyEmbedUrl = () => {
-        if (mediaId.includes("spotify:")) {
-            const parts = mediaId.replace("spotify:", "").split(":");
-            return `https://open.spotify.com/embed/${parts.join("/")}`;
-        }
-        return `https://open.spotify.com/embed/${mediaId}`;
     };
 
     // Toggle play/pause state
     const togglePlayPause = () => {
-        if (mediaType === "youtube" && ytPlayer) {
+        if (mediaType === "youtube" && ytPlayerRef.current) {
             if (isPlaying) {
-                ytPlayer.pauseVideo();
+                ytPlayerRef.current.pauseVideo();
             } else {
-                ytPlayer.playVideo();
+                ytPlayerRef.current.playVideo();
             }
             // The state will be updated via the onStateChange event
         } else {
