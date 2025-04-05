@@ -72,7 +72,7 @@ export default function AddMenuItemDialog({ isOpen, setIsOpen, onItemAdded }) {
                 id: newItemRef.key,
                 name: formData.name,
                 description: formData.description,
-                image: "/placeholder.svg?height=300&width=300", // Default placeholder image
+                image: "/icons/input-menu.svg", // Default placeholder image
                 timestamp: Date.now(),
             };
 

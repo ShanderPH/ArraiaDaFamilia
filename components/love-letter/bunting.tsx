@@ -1,12 +1,32 @@
+"use client";
+
+import { useEffect } from "react";
+
 export default function Bunting() {
+    // Monitor window width to ensure responsive adjustments
+    useEffect(() => {
+        const handleResize = () => {
+            // Handle window resize logic if needed
+        };
+
+        // Add event listener
+        window.addEventListener("resize", handleResize);
+
+        // Clean up
+        return () => {
+            window.removeEventListener("resize", handleResize);
+        };
+    }, []);
+
     return (
-        <div className="absolute top-0 left-0 w-full overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 w-full overflow-hidden">
             {/* Top bunting */}
             <div className="relative h-16">
-                <div className="absolute top-0 left-0 w-full">
+                <div className="absolute top-0 left-0 right-0 w-full">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 1200 50"
+                        preserveAspectRatio="none"
                         className="w-full"
                     >
                         <path
@@ -73,10 +93,11 @@ export default function Bunting() {
 
             {/* Second bunting line */}
             <div className="relative h-16 mt-2">
-                <div className="absolute top-0 left-20 w-full">
+                <div className="absolute top-0 left-0 right-0 w-full">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 1200 50"
+                        preserveAspectRatio="none"
                         className="w-full"
                     >
                         <path
