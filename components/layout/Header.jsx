@@ -2,8 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Search, ShoppingBag, Menu, Mail, Home, Info } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Mail, Home, Info } from "lucide-react";
 import { AutoPocketPlayer } from "./auto-pocket-player";
 import { useState, useEffect } from "react";
 
@@ -85,7 +84,7 @@ function DesktopNavigation() {
     const links = [
         { href: "/", text: "Pratos", active: true },
         { href: "/love-letter", text: "Correio Elegante", active: false },
-        { href: "#", text: "Informações", active: false },
+        { href: "/landing", text: "Informações", active: false },
     ];
 
     return (
@@ -122,7 +121,7 @@ function MobileNavigation() {
             active: false,
         },
         {
-            href: "#",
+            href: "/landing",
             text: "Informações",
             icon: <Info className="h-6 w-6" />,
             active: false,
